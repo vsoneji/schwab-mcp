@@ -208,7 +208,7 @@ export async function startOAuthServer(
 			oauthLogger.info(`OAuth server listening on https://localhost:${port}`)
 
 			// Generate authorization URL
-			const authUrl = await tokenManager.getAuthorizationUrl()
+			const { authUrl } = await tokenManager.getAuthorizationUrl()
 
 			oauthLogger.info('Please visit this URL to authorize the application:')
 			console.log(`\n${authUrl}\n`)

@@ -1,9 +1,10 @@
 /**
- * Lightweight Pino logger wrapper for Cloudflare Workers
+ * Lightweight Pino logger wrapper
  * Provides structured logging with automatic secret redaction
  */
 
 import pino, { type LogFn } from 'pino'
+import { ENVIRONMENTS } from './constants.js'
 
 // Pino log levels
 export type PinoLogLevel =
@@ -122,7 +123,7 @@ const pinoConfig: pino.LoggerOptions = {
 	timestamp: pino.stdTimeFunctions.isoTime,
 	// Base context
 	base: {
-		env: 'cloudflare-worker',
+		env: ENVIRONMENTS.DEVELOPMENT,
 	},
 }
 

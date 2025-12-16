@@ -305,7 +305,7 @@ class SchwabMCPServer {
 			}
 
 			try {
-				const data = await spec.call(this.client, params)
+				const data = await spec.call(this.client, params as any)
 				return toolSuccess({
 					data,
 					source: spec.name,

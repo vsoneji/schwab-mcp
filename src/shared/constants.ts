@@ -54,6 +54,7 @@ export const TOOL_NAMES = {
  * Environment Constants
  */
 export const ENVIRONMENTS = {
+	DEVELOPMENT: 'development',
 	PRODUCTION: 'PRODUCTION',
 } as const
 
