@@ -1,5 +1,5 @@
 /**
- * Environment variables and bindings for the Schwab MCP worker
+ * Environment variables for the Schwab MCP server
  *
  * This is the single source of truth for environment variable definitions.
  * In runtime, these variables are validated and accessed through AppConfig.
@@ -16,21 +16,10 @@ export interface Env {
 	SCHWAB_CLIENT_SECRET: string
 
 	/**
-	 * Secret key used for cookie encryption
-	 */
-	COOKIE_ENCRYPTION_KEY: string
-
-	/**
 	 * OAuth redirect URI for callback after authentication
-	 * This should be a fixed, configured value to ensure consistency
-	 * across different environments and proxies
+	 * This should be https://localhost:3000/callback for local development
 	 */
 	SCHWAB_REDIRECT_URI: string
-
-	/**
-	 * KV namespace for storing tokens (required)
-	 */
-	OAUTH_KV: KVNamespace
 
 	/**
 	 * Optional log level for application logging
@@ -44,9 +33,9 @@ export interface Env {
 	ENVIRONMENT?: string
 
 	/**
-	 * Optional comma-separated list of additional redirect URI regex patterns
+	 * Port for HTTPS server (defaults to 3000)
 	 */
-	ALLOWED_REDIRECT_REGEXPS?: string
+	PORT?: number
 }
 
 /**
@@ -66,19 +55,9 @@ export interface ValidatedEnv {
 	readonly SCHWAB_CLIENT_SECRET: string
 
 	/**
-	 * Secret key used for cookie encryption
-	 */
-	readonly COOKIE_ENCRYPTION_KEY: string
-
-	/**
 	 * OAuth redirect URI for callback after authentication
 	 */
 	readonly SCHWAB_REDIRECT_URI: string
-
-	/**
-	 * KV namespace for storing tokens (required)
-	 */
-	readonly OAUTH_KV: KVNamespace
 
 	/**
 	 * Optional log level for application logging
@@ -92,7 +71,7 @@ export interface ValidatedEnv {
 	readonly ENVIRONMENT?: 'development' | 'staging' | 'production'
 
 	/**
-	 * Optional comma-separated list of additional redirect URI regex patterns
+	 * Port for HTTPS server
 	 */
-	readonly ALLOWED_REDIRECT_REGEXPS?: string
+	readonly PORT: number
 }

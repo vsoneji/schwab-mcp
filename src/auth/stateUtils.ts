@@ -3,9 +3,9 @@ import {
 	decodeAndVerifyState as sdkDecodeAndVerifyState,
 	extractClientIdFromState as sdkExtractClientIdFromState,
 } from '@sudowealth/schwab-api'
-import { type ValidatedEnv } from '../../types/env'
-import { LOGGER_CONTEXTS } from '../shared/constants'
-import { logger } from '../shared/log'
+import { type ValidatedEnv } from '../../types/env.js'
+import { LOGGER_CONTEXTS } from '../shared/constants.js'
+import { logger } from '../shared/log.js'
 import { AuthErrors } from './errors'
 import { StateSchema, type StateData as StateDataFromSchema } from './schemas'
 

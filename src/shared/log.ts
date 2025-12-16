@@ -3,7 +3,7 @@
  * Provides structured logging with automatic secret redaction
  */
 
-import pino from 'pino'
+import pino, { type LogFn } from 'pino'
 
 // Pino log levels
 export type PinoLogLevel =
@@ -138,7 +138,7 @@ export function buildLogger(level: PinoLogLevel = 'info'): AppLogger {
 
 	// Create wrapper that matches our existing interface
 	const createLogFunction = (
-		logFn: pino.LogFn,
+		logFn: LogFn,
 	): ((message: string, data?: any, contextId?: string) => void) => {
 		return (message: string, data?: any, contextId?: string) => {
 			if (contextId) {

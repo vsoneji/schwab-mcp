@@ -10,8 +10,8 @@ import {
 	GetQuoteBySymbolIdParams,
 	GetQuotesParams,
 } from '@sudowealth/schwab-api'
-import { logger } from '../../shared/log'
-import { createToolSpec } from '../types'
+import { logger } from '../../shared/log.js'
+import { createToolSpec } from '../types.js'
 
 export const toolSpecs = [
 	createToolSpec({

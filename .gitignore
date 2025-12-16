@@ -173,3 +173,11 @@ wrangler.local.jsonc
 wrangler.deploy.jsonc
 .dev.vars
 .wrangler/
+
+# Local MCP server
+
+# Self-signed certificates directory
+.certs/
+
+# Authentication tokens directory
+.auth/

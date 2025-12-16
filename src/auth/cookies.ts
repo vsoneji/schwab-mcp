@@ -3,13 +3,13 @@ import {
 	createCookieTokenStore,
 	type CookieTokenStoreOptions,
 } from '@sudowealth/schwab-api'
-import { type ValidatedEnv } from '../../types/env'
+import { type ValidatedEnv } from '../../types/env.js'
 import {
 	LOGGER_CONTEXTS,
 	COOKIE_NAMES,
 	HTTP_HEADERS,
-} from '../shared/constants'
-import { logger } from '../shared/log'
+} from '../shared/constants.js'
+import { logger } from '../shared/log.js'
 import { AuthErrors } from './errors'
 import { ApprovedClientsSchema } from './schemas'
 import { extractClientIdFromState, type StateData } from './stateUtils'

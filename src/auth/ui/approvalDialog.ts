@@ -1,5 +1,5 @@
 import { type ClientInfo } from '@cloudflare/workers-oauth-provider'
-import { type ValidatedEnv } from '../../../types/env'
+import { type ValidatedEnv } from '../../../types/env.js'
 import { APPROVAL_CONFIG } from './config'
 
 /**
