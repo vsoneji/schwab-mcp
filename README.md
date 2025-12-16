@@ -170,6 +170,27 @@ Add the server to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "schwab": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/path/to/schwab-mcp/src/index.ts"
+      ],
+      "env": {
+        "SCHWAB_CLIENT_ID": "your_app_key",
+        "SCHWAB_CLIENT_SECRET": "your_app_secret",
+        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
+      }
+    }
+  }
+}
+```
+
+Or if you prefer to build first and run the compiled JavaScript:
+
+```json
+{
+  "mcpServers": {
+    "schwab": {
       "command": "node",
       "args": [
         "/path/to/schwab-mcp/dist/index.js"
@@ -184,27 +205,7 @@ Add the server to your Claude Desktop configuration file:
 }
 ```
 
-Or use ts-node to run directly:
-
-```json
-{
-  "mcpServers": {
-    "schwab": {
-      "command": "node",
-      "args": [
-        "--loader",
-        "ts-node/esm",
-        "/path/to/schwab-mcp/src/index.ts"
-      ],
-      "env": {
-        "SCHWAB_CLIENT_ID": "your_app_key",
-        "SCHWAB_CLIENT_SECRET": "your_app_secret",
-        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
-      }
-    }
-  }
-}
-```
+Note: The first option using `tsx` is recommended as it doesn't require a build step.
 
 Restart Claude Desktop. The server will connect via stdio transport.
 
