@@ -36,8 +36,7 @@ providing:
   and options chains
 - **Account Privacy**: Built-in account identifier scrubbing to protect
   sensitive information
-- **Enterprise-Ready**: Deployed on Cloudflare Workers with Durable Objects for
-  state management
+- **Local-Only**: Runs entirely on your machine with local HTTPS server and file-based token storage
 
 ## Features
 
@@ -83,10 +82,8 @@ providing:
 
 1. **Schwab Developer Account**: Register at
    [Schwab Developer Portal](https://developer.schwab.com)
-2. **Cloudflare Account**: For deployment (Workers paid plan required for
-   Durable Objects)
-3. **Node.js**: Version 22.x or higher
-4. **Wrangler CLI**: Installed via npm (included in dev dependencies)
+2. **Node.js**: Version 20.x or higher (22.x recommended)
+3. **OpenSSL**: Required for generating self-signed certificates (usually pre-installed on macOS/Linux)
 
 ## Getting Started
 
@@ -97,111 +94,119 @@ git clone <repository-url>
 cd schwab-mcp
 npm install
 
-# Authenticate with Cloudflare (first time only)
-npx wrangler login
+# Configure your environment
+cp .env.example .env
+# Edit .env with your Schwab app credentials
 
-# Create KV namespace for OAuth token storage
-npx wrangler kv:namespace create "OAUTH_KV"
-# Note the ID from the output - you'll need it for configuration
-
-# Set up your personal configuration
-cp wrangler.example.jsonc wrangler.jsonc
-# Edit wrangler.jsonc to:
-# 1. Replace YOUR_KV_NAMESPACE_ID_HERE with the ID from above
-# 2. Change the name to something unique (e.g., "schwab-mcp-yourname")
-
-# Set your secrets
-npx wrangler secret put SCHWAB_CLIENT_ID      # Your Schwab App Key
-npx wrangler secret put SCHWAB_CLIENT_SECRET  # Your Schwab App Secret
-npx wrangler secret put SCHWAB_REDIRECT_URI   # https://your-worker-name.workers.dev/callback
-npx wrangler secret put COOKIE_ENCRYPTION_KEY # Generate with: openssl rand -hex 32
-
-# Deploy
-npm run deploy
+# Start the MCP server (will prompt for OAuth on first run)
+npm run start
 ```
 
-### Configuration Notes
-
-- `wrangler.example.jsonc` - Template configuration (committed)
-- `wrangler.jsonc` - Your personal config (git-ignored, created from template)
-- `.dev.vars` - Local development secrets (git-ignored, optional)
-
-Since `wrangler.jsonc` is git-ignored, you can safely develop and test with your
-personal configuration without exposing secrets.
-
-### Detailed Configuration
+### Configuration
 
 #### 1. Create a Schwab App
 
 1. Log in to the [Schwab Developer Portal](https://developer.schwab.com)
 2. Create a new app with:
-   - **App Name**: Your MCP server name
-   - **Callback URL**:
-     `https://schwab-mcp.<your-subdomain>.workers.dev/callback`
-   - **App Type**: Personal or third-party based on your use case
+   - **App Name**: Your MCP server name (e.g., "My Schwab MCP")
+   - **Callback URL**: `https://localhost:3000/callback`
+   - **App Type**: Personal
 3. Note your **App Key** (Client ID) and generate an **App Secret**
 
-#### 2. Set Environment Variables
+#### 2. Configure Environment Variables
 
-The same secrets from Quick Setup need to be set (see above).
-
-### GitHub Actions Deployment
-
-For automated deployments, add these GitHub repository secrets:
-
-1. **`CLOUDFLARE_API_TOKEN`**: Your Cloudflare API token
-2. **`OAUTH_KV_ID`**: Your KV namespace ID
-
-The workflow handles validation and deployment when pushing to `main`.
-Cloudflare secrets must still be set via `wrangler secret`.
-
-### Testing with Inspector
-
-Test your deployment using the MCP Inspector:
+Copy the `.env.example` file to `.env` and fill in your credentials:
 
 ```bash
-npx @modelcontextprotocol/inspector@latest
+cp .env.example .env
 ```
 
-Enter `https://schwab-mcp.<your-subdomain>.workers.dev/sse` and connect. You'll
-be prompted to authenticate with Schwab.
+Edit `.env`:
+
+```env
+# Schwab OAuth Configuration
+SCHWAB_CLIENT_ID=your_schwab_app_key_here
+SCHWAB_CLIENT_SECRET=your_schwab_app_secret_here
+
+# OAuth Redirect URI (must match what you configured in Schwab Developer Portal)
+SCHWAB_REDIRECT_URI=https://localhost:3000/callback
+
+# Optional: Port for HTTPS server (default: 3000)
+PORT=3000
+
+# Optional: Log level (trace, debug, info, warn, error, fatal)
+LOG_LEVEL=info
+
+# Optional: Environment (development, staging, production)
+ENVIRONMENT=production
+```
+
+#### 3. First Run - OAuth Authentication
+
+On the first run, the server will:
+
+1. Generate self-signed certificates in `.certs/` directory
+2. Start an HTTPS server on `https://localhost:3000`
+3. Open your browser to the Schwab authorization page
+4. After you authorize, tokens will be saved to `.auth/` directory
+5. The MCP server will start and be ready to use
+
+```bash
+npm run start
+```
+
+**Note**: You may need to trust the self-signed certificate in your browser or system. The certificate is only used for localhost OAuth callback.
 
 ## Usage
 
 ### Claude Desktop Configuration
 
-### 1. Use Claude Integrations
+Add the server to your Claude Desktop configuration file:
 
-1. Go to the [Claude Desktop](https://www.anthropic.com/docs/claude-desktop)
-   settings
-2. Click on the "Integrations" tab
-3. Click on the "Add Custom Integration" button
-4. Enter the integration name "Schwab"
-5. Enter the MCP Server URL:
-   `https://schwab-mcp.<your-subdomain>.workers.dev/sse`
-6. Click on the "Add" button
-7. Click "Connect" and the Schwab Authentication flow will start.
-
-### 2. Add the MCP Server to your Claude Desktop configuration
-
-Add the following to your Claude Desktop configuration file:
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
-	"mcpServers": {
-		"schwab": {
-			"command": "npx",
-			"args": [
-				"mcp-remote",
-				"https://schwab-mcp.<your-subdomain>.workers.dev/sse"
-			]
-		}
-	}
+  "mcpServers": {
+    "schwab": {
+      "command": "node",
+      "args": [
+        "/path/to/schwab-mcp/dist/index.js"
+      ],
+      "env": {
+        "SCHWAB_CLIENT_ID": "your_app_key",
+        "SCHWAB_CLIENT_SECRET": "your_app_secret",
+        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
+      }
+    }
+  }
 }
 ```
 
-Restart Claude Desktop. When you first use a Schwab tool, a browser window will
-open for authentication.
+Or use ts-node to run directly:
+
+```json
+{
+  "mcpServers": {
+    "schwab": {
+      "command": "node",
+      "args": [
+        "--loader",
+        "ts-node/esm",
+        "/path/to/schwab-mcp/src/index.ts"
+      ],
+      "env": {
+        "SCHWAB_CLIENT_ID": "your_app_key",
+        "SCHWAB_CLIENT_SECRET": "your_app_secret",
+        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop. The server will connect via stdio transport.
 
 ### Example Commands
 
@@ -213,50 +218,25 @@ Once connected, you can ask Claude to:
 - "Show me the options chain for TSLA"
 - "Get my recent transactions from the last week"
 
-### Local Development
-
-For local development, create a `.dev.vars` file (automatically ignored by git):
-
-```env
-SCHWAB_CLIENT_ID=your_development_app_key
-SCHWAB_CLIENT_SECRET=your_development_app_secret
-SCHWAB_REDIRECT_URI=http://localhost:8788/callback
-COOKIE_ENCRYPTION_KEY=your_random_key_here
-LOG_LEVEL=DEBUG  # Optional: Enable debug logging
-```
-
-Run locally:
-
-```bash
-npm run dev
-# Server will be available at http://localhost:8788
-```
-
-Connect to `http://localhost:8788/sse` using the MCP Inspector for testing.
-
 ## Architecture
 
 ### Technology Stack
 
-- **Runtime**: Cloudflare Workers with Durable Objects
-- **Authentication**: OAuth 2.0 with PKCE via
-  `@cloudflare/workers-oauth-provider`
+- **Runtime**: Node.js with TypeScript
+- **Authentication**: OAuth 2.0 with PKCE via `@sudowealth/schwab-api`
 - **API Client**: `@sudowealth/schwab-api` for type-safe Schwab API access
-- **MCP Framework**: `@modelcontextprotocol/sdk` with `workers-mcp` adapter
-- **State Management**: KV storage for tokens, Durable Objects for session state
+- **MCP Framework**: `@modelcontextprotocol/sdk` with stdio transport
+- **State Management**: File-based token storage in `.auth/` directory
+- **OAuth Server**: Express with HTTPS for OAuth callback handling
 
 ### Security Features
 
 1. **OAuth 2.0 with PKCE**: Secure authentication flow preventing authorization
    code interception
-2. **Enhanced Token Management**:
-   - Centralized KV token store with automatic migration
-   - Automatic token refresh (5 minutes before expiration)
-   - 31-day token persistence with TTL
-3. **Account Scrubbing**: Sensitive account identifiers are automatically
-   replaced with display names
-4. **State Security**: HMAC-SHA256 signatures for state parameter integrity
-5. **Cookie Encryption**: Client approval state encrypted with AES-256
+2. **Local Token Storage**: Tokens stored locally in `.auth/` directory (never sent to external servers)
+3. **HTTPS Localhost**: Self-signed certificates for secure OAuth callback
+4. **Automatic Token Refresh**: Tokens refreshed 5 minutes before expiration
+5. **Account Scrubbing**: Sensitive account identifiers automatically replaced with display names
 6. **Secret Redaction**: Automatic masking of sensitive data in logs
 
 ## Development
@@ -264,30 +244,42 @@ Connect to `http://localhost:8788/sse` using the MCP Inspector for testing.
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server on port 8788
-npm run deploy       # Deploy to Cloudflare Workers
+npm run start        # Start the MCP server
+npm run dev          # Start in development mode (same as start)
+npm run build        # Build TypeScript to JavaScript
 npm run typecheck    # Run TypeScript type checking
-npm run lint         # Run ESLint with automatic fixes
+npm run lint         # Run ESLint
 npm run format       # Format code with Prettier
 npm run validate     # Run typecheck and lint together
+```
+
+### Project Structure
+
+```
+schwab-mcp/
+├── .auth/           # OAuth tokens (git-ignored)
+├── .certs/          # Self-signed certificates (git-ignored)
+├── src/
+│   ├── index.ts     # Main MCP server entry point
+│   ├── auth/        # OAuth authentication client
+│   ├── server/      # OAuth HTTP server and certificate generation
+│   ├── shared/      # Shared utilities (logging, token storage)
+│   └── tools/       # MCP tool implementations
+├── .env             # Environment variables (git-ignored)
+└── .env.example     # Example environment variables
 ```
 
 ### Debugging
 
 The server includes comprehensive logging with configurable levels:
 
-- **Development**: Terminal output with colored logs
-- **Production**: Cloudflare dashboard → Workers → Logs
-- **Log Levels**: DEBUG, INFO, WARN, ERROR (set via LOG_LEVEL env var)
+- **Log Levels**: trace, debug, info, warn, error, fatal
+- Set via `LOG_LEVEL` environment variable in `.env`
 
 Enable debug logging to see detailed OAuth flow and API interactions:
 
-```bash
-# For local development
-echo "LOG_LEVEL=DEBUG" >> .dev.vars
-
-# For production
-npx wrangler secret put LOG_LEVEL --secret="DEBUG"
+```env
+LOG_LEVEL=debug
 ```
 
 ### Error Handling
@@ -297,7 +289,6 @@ The server implements robust error handling with specific error types:
 - **Authentication Errors (401)**: Prompt for re-authentication
 - **Client Errors (400)**: Invalid parameters, missing data
 - **Server Errors (500)**: API failures, configuration issues
-- **Network Errors (503)**: Automatic retry with backoff
 - All errors include request IDs for Schwab API troubleshooting
 
 ## Contributing
@@ -316,41 +307,43 @@ MIT
 
 ### Common Issues
 
-1. **"KV namespace not found" error**
+1. **"Certificate error" in browser**
 
-   - Ensure you created the KV namespace and updated `wrangler.jsonc`
-   - Run `npx wrangler kv:namespace list` to verify
+   - This is expected with self-signed certificates
+   - Accept the certificate warning during OAuth flow
+   - The certificate is only used for `https://localhost:3000/callback`
 
-2. **Authentication failures**
+2. **"Cannot find module" errors**
 
-   - Verify your redirect URI matches exactly in Schwab app settings
-   - Check that all secrets are set correctly with `npx wrangler secret list`
-   - Enable debug logging to see detailed OAuth flow
+   - Run `npm install` to ensure all dependencies are installed
+   - Make sure you're using Node.js 20.x or higher
 
-3. **"Durable Objects not available" error**
+3. **"Failed to generate certificates" error**
 
-   - Ensure you have a paid Cloudflare Workers plan
-   - Durable Objects are not available on the free tier
+   - Ensure OpenSSL is installed and available in your PATH
+   - macOS/Linux: Usually pre-installed
+   - Windows: Install via https://slproweb.com/products/Win32OpenSSL.html
 
-4. **Token refresh issues**
-   - The server automatically refreshes tokens 5 minutes before expiration
-   - Tokens are migrated from clientId to schwabUserId keys automatically
-   - Check KV namespace for stored tokens:
-     `npx wrangler kv:key list --namespace-id=<your-id>`
+4. **Authentication failures**
+
+   - Verify your redirect URI matches exactly: `https://localhost:3000/callback`
+   - Check that your Schwab app credentials are correct in `.env`
+   - Enable debug logging: `LOG_LEVEL=debug` in `.env`
+
+5. **"Port already in use" error**
+   - Change the PORT in `.env` to a different value
+   - Make sure no other process is using port 3000
 
 ## Recent Updates
 
-- **Enhanced Token Management**: Centralized KV token store prevents token
-  divergence
-- **Improved Security**: HMAC-SHA256 state validation and automatic secret
-  redaction
-- **Better Error Handling**: Structured error types with Schwab API error
-  mapping
-- **Configurable Logging**: Debug mode for troubleshooting OAuth and API issues
+- **Local-Only Architecture**: Migrated from Cloudflare Workers to local Node.js server
+- **File-Based Token Storage**: Tokens stored securely in local `.auth/` directory
+- **HTTPS OAuth Flow**: Self-signed certificates for secure localhost OAuth callback
+- **Stdio Transport**: Uses standard MCP SDK with stdio for Claude Desktop integration
 
 ## Acknowledgments
 
-- Built with [Cloudflare Workers](https://workers.cloudflare.com/)
 - Uses [Model Context Protocol](https://modelcontextprotocol.io/)
 - Powered by
   [@sudowealth/schwab-api](https://www.npmjs.com/package/@sudowealth/schwab-api)
+- Built with [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk)
