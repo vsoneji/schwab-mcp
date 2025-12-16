@@ -13,6 +13,7 @@ import {
 	type SchwabApiLogger,
 	type TokenData,
 } from '@sudowealth/schwab-api'
+import { zodToJsonSchema } from 'zod-to-json-schema'
 import { type ValidatedEnv, type Env } from '../types/env.js'
 import { initializeSchwabAuthClient } from './auth/client.js'
 import { getConfig } from './config/index.js'
@@ -288,7 +289,10 @@ class SchwabMCPServer {
 		const tools = allToolSpecs.map((spec: ToolSpec<any>) => ({
 			name: spec.name,
 			description: spec.description,
-			inputSchema: spec.schema,
+			inputSchema: zodToJsonSchema(spec.schema, {
+				$refStrategy: 'none',
+				target: 'jsonSchema7',
+			}),
 		}))
 
 		this.server.setRequestHandler(ListToolsRequestSchema, async () => ({

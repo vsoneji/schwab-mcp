@@ -1,0 +1,13 @@
+{
+    "servers": {
+        "schwab-mcp": {
+            "type": "stdio",
+            "command": "npm",
+            "args": [
+                "run",
+                "start"
+            ]
+        }
+    },
+    "inputs": []
+}

@@ -36,7 +36,8 @@ providing:
   and options chains
 - **Account Privacy**: Built-in account identifier scrubbing to protect
   sensitive information
-- **Local-Only**: Runs entirely on your machine with local HTTPS server and file-based token storage
+- **Local-Only**: Runs entirely on your machine with local HTTPS server and
+  file-based token storage
 
 ## Features
 
@@ -144,7 +145,8 @@ ENVIRONMENT=production
 
 On the first run, the server will:
 
-1. Generate self-signed certificates in `.certs/` directory (no OpenSSL required)
+1. Generate self-signed certificates in `.certs/` directory (no OpenSSL
+   required)
 2. Start an HTTPS server on `https://localhost:3000`
 3. Open your browser to the Schwab authorization page
 4. After you authorize, tokens will be saved to `.auth/` directory
@@ -154,7 +156,9 @@ On the first run, the server will:
 npm run start
 ```
 
-**Note**: You may need to trust the self-signed certificate in your browser or system. The certificate is only used for localhost OAuth callback and is generated automatically using Node.js crypto libraries.
+**Note**: You may need to trust the self-signed certificate in your browser or
+system. The certificate is only used for localhost OAuth callback and is
+generated automatically using Node.js crypto libraries.
 
 ## Usage
 
@@ -167,20 +171,17 @@ Add the server to your Claude Desktop configuration file:
 
 ```json
 {
-  "mcpServers": {
-    "schwab": {
-      "command": "npx",
-      "args": [
-        "tsx",
-        "/path/to/schwab-mcp/src/index.ts"
-      ],
-      "env": {
-        "SCHWAB_CLIENT_ID": "your_app_key",
-        "SCHWAB_CLIENT_SECRET": "your_app_secret",
-        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
-      }
-    }
-  }
+	"mcpServers": {
+		"schwab": {
+			"command": "npx",
+			"args": ["tsx", "/path/to/schwab-mcp/src/index.ts"],
+			"env": {
+				"SCHWAB_CLIENT_ID": "your_app_key",
+				"SCHWAB_CLIENT_SECRET": "your_app_secret",
+				"SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
+			}
+		}
+	}
 }
 ```
 
@@ -188,23 +189,22 @@ Or if you prefer to build first and run the compiled JavaScript:
 
 ```json
 {
-  "mcpServers": {
-    "schwab": {
-      "command": "node",
-      "args": [
-        "/path/to/schwab-mcp/dist/index.js"
-      ],
-      "env": {
-        "SCHWAB_CLIENT_ID": "your_app_key",
-        "SCHWAB_CLIENT_SECRET": "your_app_secret",
-        "SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
-      }
-    }
-  }
+	"mcpServers": {
+		"schwab": {
+			"command": "node",
+			"args": ["/path/to/schwab-mcp/dist/index.js"],
+			"env": {
+				"SCHWAB_CLIENT_ID": "your_app_key",
+				"SCHWAB_CLIENT_SECRET": "your_app_secret",
+				"SCHWAB_REDIRECT_URI": "https://localhost:3000/callback"
+			}
+		}
+	}
 }
 ```
 
-Note: The first option using `tsx` is recommended as it doesn't require a build step.
+Note: The first option using `tsx` is recommended as it doesn't require a build
+step.
 
 Restart Claude Desktop. The server will connect via stdio transport.
 
@@ -233,10 +233,12 @@ Once connected, you can ask Claude to:
 
 1. **OAuth 2.0 with PKCE**: Secure authentication flow preventing authorization
    code interception
-2. **Local Token Storage**: Tokens stored locally in `.auth/` directory (never sent to external servers)
+2. **Local Token Storage**: Tokens stored locally in `.auth/` directory (never
+   sent to external servers)
 3. **HTTPS Localhost**: Self-signed certificates for secure OAuth callback
 4. **Automatic Token Refresh**: Tokens refreshed 5 minutes before expiration
-5. **Account Scrubbing**: Sensitive account identifiers automatically replaced with display names
+5. **Account Scrubbing**: Sensitive account identifiers automatically replaced
+   with display names
 6. **Secret Redaction**: Automatic masking of sensitive data in logs
 
 ## Development
@@ -308,37 +310,38 @@ MIT
 ### Common Issues
 
 1. **"Certificate error" in browser**
-
    - This is expected with self-signed certificates
    - Accept the certificate warning during OAuth flow
    - The certificate is only used for `https://localhost:3000/callback`
 
 2. **"Cannot find module" errors**
-
    - Run `npm install` to ensure all dependencies are installed
    - Make sure you're using Node.js 20.x or higher
 
 3. **Authentication failures**
-
    - Verify your redirect URI matches exactly: `https://localhost:3000/callback`
    - Check that your Schwab app credentials are correct in `.env`
    - Enable debug logging: `LOG_LEVEL=debug` in `.env`
 
 4. **"Port already in use" error**
-
    - Change the PORT in `.env` to a different value
    - Make sure no other process is using port 3000
 
 ## Recent Updates
 
-- **Local-Only Architecture**: Migrated from Cloudflare Workers to local Node.js server
-- **File-Based Token Storage**: Tokens stored securely in local `.auth/` directory
-- **HTTPS OAuth Flow**: Self-signed certificates for secure localhost OAuth callback
-- **Stdio Transport**: Uses standard MCP SDK with stdio for Claude Desktop integration
+- **Local-Only Architecture**: Migrated from Cloudflare Workers to local Node.js
+  server
+- **File-Based Token Storage**: Tokens stored securely in local `.auth/`
+  directory
+- **HTTPS OAuth Flow**: Self-signed certificates for secure localhost OAuth
+  callback
+- **Stdio Transport**: Uses standard MCP SDK with stdio for Claude Desktop
+  integration
 
 ## Acknowledgments
 
 - Uses [Model Context Protocol](https://modelcontextprotocol.io/)
 - Powered by
   [@sudowealth/schwab-api](https://www.npmjs.com/package/@sudowealth/schwab-api)
-- Built with [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk)
+- Built with
+  [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk)
