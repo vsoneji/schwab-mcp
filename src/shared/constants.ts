@@ -29,6 +29,7 @@ export const LOGGER_CONTEXTS = {
 	AUTH_CLIENT: 'auth-client',
 	STATE_UTILS: 'state-utils',
 	KV_TOKEN_STORE: 'kv-token-store',
+	TOKEN_STORE: 'token-store',
 } as const
 
 /**
@@ -53,6 +54,7 @@ export const TOOL_NAMES = {
  * Environment Constants
  */
 export const ENVIRONMENTS = {
+	DEVELOPMENT: 'development',
 	PRODUCTION: 'PRODUCTION',
 } as const
 

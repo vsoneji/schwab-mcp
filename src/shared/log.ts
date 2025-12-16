@@ -1,9 +1,10 @@
 /**
- * Lightweight Pino logger wrapper for Cloudflare Workers
+ * Lightweight Pino logger wrapper
  * Provides structured logging with automatic secret redaction
  */
 
-import pino from 'pino'
+import pino, { type LogFn } from 'pino'
+import { ENVIRONMENTS } from './constants.js'
 
 // Pino log levels
 export type PinoLogLevel =
@@ -122,7 +123,7 @@ const pinoConfig: pino.LoggerOptions = {
 	timestamp: pino.stdTimeFunctions.isoTime,
 	// Base context
 	base: {
-		env: 'cloudflare-worker',
+		env: ENVIRONMENTS.DEVELOPMENT,
 	},
 }
 
@@ -131,14 +132,14 @@ const pinoConfig: pino.LoggerOptions = {
  */
 export function buildLogger(level: PinoLogLevel = 'info'): AppLogger {
 	// Create base pino instance
-	const baseLogger = pino({
+	const baseLogger = (pino as any)({
 		...pinoConfig,
 		level,
 	})
 
 	// Create wrapper that matches our existing interface
 	const createLogFunction = (
-		logFn: pino.LogFn,
+		logFn: LogFn,
 	): ((message: string, data?: any, contextId?: string) => void) => {
 		return (message: string, data?: any, contextId?: string) => {
 			if (contextId) {
