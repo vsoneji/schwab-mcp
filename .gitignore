@@ -181,3 +181,7 @@ wrangler.deploy.jsonc
 
 # Authentication tokens directory
 .auth/
+
+# TypeScript compiled output (src should only contain .ts files)
+src/**/*.js
+types/**/*.js
