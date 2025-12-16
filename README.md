@@ -83,7 +83,6 @@ providing:
 1. **Schwab Developer Account**: Register at
    [Schwab Developer Portal](https://developer.schwab.com)
 2. **Node.js**: Version 20.x or higher (22.x recommended)
-3. **OpenSSL**: Required for generating self-signed certificates (usually pre-installed on macOS/Linux)
 
 ## Getting Started
 
@@ -145,7 +144,7 @@ ENVIRONMENT=production
 
 On the first run, the server will:
 
-1. Generate self-signed certificates in `.certs/` directory
+1. Generate self-signed certificates in `.certs/` directory (no OpenSSL required)
 2. Start an HTTPS server on `https://localhost:3000`
 3. Open your browser to the Schwab authorization page
 4. After you authorize, tokens will be saved to `.auth/` directory
@@ -155,7 +154,7 @@ On the first run, the server will:
 npm run start
 ```
 
-**Note**: You may need to trust the self-signed certificate in your browser or system. The certificate is only used for localhost OAuth callback.
+**Note**: You may need to trust the self-signed certificate in your browser or system. The certificate is only used for localhost OAuth callback and is generated automatically using Node.js crypto libraries.
 
 ## Usage
 
@@ -319,19 +318,14 @@ MIT
    - Run `npm install` to ensure all dependencies are installed
    - Make sure you're using Node.js 20.x or higher
 
-3. **"Failed to generate certificates" error**
-
-   - Ensure OpenSSL is installed and available in your PATH
-   - macOS/Linux: Usually pre-installed
-   - Windows: Install via https://slproweb.com/products/Win32OpenSSL.html
-
-4. **Authentication failures**
+3. **Authentication failures**
 
    - Verify your redirect URI matches exactly: `https://localhost:3000/callback`
    - Check that your Schwab app credentials are correct in `.env`
    - Enable debug logging: `LOG_LEVEL=debug` in `.env`
 
-5. **"Port already in use" error**
+4. **"Port already in use" error**
+
    - Change the PORT in `.env` to a different value
    - Make sure no other process is using port 3000
 

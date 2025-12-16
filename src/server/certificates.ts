@@ -1,13 +1,10 @@
-import { exec } from 'node:child_process'
 import { promises as fs } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { promisify } from 'node:util'
 import { LOGGER_CONTEXTS } from '../shared/constants.js'
 import { logger } from '../shared/log.js'
 
 const certLogger = logger.child(LOGGER_CONTEXTS.AUTH_CLIENT)
-const execAsync = promisify(exec)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -30,7 +27,8 @@ async function certificatesExist(): Promise<boolean> {
 }
 
 /**
- * Generate self-signed certificates using openssl
+ * Generate self-signed certificates using Node.js crypto module
+ * This works cross-platform without requiring OpenSSL to be installed
  */
 export async function generateCertificates(): Promise<void> {
 	// Check if certificates already exist
@@ -52,12 +50,56 @@ export async function generateCertificates(): Promise<void> {
 	const certPath = join(CERT_DIR, 'cert.pem')
 	const keyPath = join(CERT_DIR, 'key.pem')
 
-	// Generate certificates using openssl
-	const opensslCmd = `openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
-		-keyout ${keyPath} -out ${certPath} -days 365`
-
 	try {
-		await execAsync(opensslCmd)
+		// Create a self-signed certificate using the selfsigned package
+		// This works cross-platform without requiring OpenSSL
+		const selfsigned = await import('selfsigned')
+		const attrs = [{ name: 'commonName', value: 'localhost' }]
+		const pems = await selfsigned.default.generate(attrs, {
+			keySize: 2048,
+			algorithm: 'sha256',
+			extensions: [
+				{
+					name: 'basicConstraints',
+					cA: true,
+				},
+				{
+					name: 'keyUsage',
+					keyCertSign: true,
+					digitalSignature: true,
+					nonRepudiation: true,
+					keyEncipherment: true,
+					dataEncipherment: true,
+				},
+				{
+					name: 'extKeyUsage',
+					serverAuth: true,
+					clientAuth: true,
+					codeSigning: true,
+					timeStamping: true,
+				},
+				{
+					name: 'subjectAltName',
+					altNames: [
+						{
+							type: 2, // DNS
+							value: 'localhost',
+						},
+						{
+							type: 7, // IP
+							ip: '127.0.0.1',
+						},
+					],
+				},
+			],
+		})
+
+		// Write certificate and private key to files
+		await Promise.all([
+			fs.writeFile(certPath, pems.cert, 'utf-8'),
+			fs.writeFile(keyPath, pems.private, 'utf-8'),
+		])
+
 		certLogger.info('Self-signed certificates generated successfully')
 		certLogger.info(`Certificate: ${certPath}`)
 		certLogger.info(`Private key: ${keyPath}`)
@@ -69,7 +111,7 @@ export async function generateCertificates(): Promise<void> {
 			error: error.message,
 		})
 		throw new Error(
-			`Failed to generate self-signed certificates. Please ensure openssl is installed and available in PATH.\nError: ${error.message}`,
+			`Failed to generate self-signed certificates.\nError: ${error.message}`,
 		)
 	}
 }
