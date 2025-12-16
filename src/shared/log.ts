@@ -131,7 +131,7 @@ const pinoConfig: pino.LoggerOptions = {
  */
 export function buildLogger(level: PinoLogLevel = 'info'): AppLogger {
 	// Create base pino instance
-	const baseLogger = pino({
+	const baseLogger = (pino as any)({
 		...pinoConfig,
 		level,
 	})

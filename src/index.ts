@@ -3,16 +3,20 @@ import 'dotenv/config'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
+	ListToolsRequestSchema,
+	CallToolRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
+import {
 	createApiClient,
 	type SchwabApiClient,
 	type EnhancedTokenManager,
 	type SchwabApiLogger,
 	type TokenData,
 } from '@sudowealth/schwab-api'
-import { type ValidatedEnv, type Env } from '../types/env.js.js'
+import { type ValidatedEnv, type Env } from '../types/env.js'
 import { initializeSchwabAuthClient } from './auth/client.js'
-import { startOAuthServer } from './server/oauth.js'
 import { getConfig } from './config/index.js'
+import { startOAuthServer } from './server/oauth.js'
 import {
 	APP_NAME,
 	LOGGER_CONTEXTS,
@@ -21,10 +25,13 @@ import {
 	CONTENT_TYPES,
 	APP_SERVER_NAME,
 } from './shared/constants.js'
-import { makeFileTokenStore, type TokenIdentifiers } from './shared/fileTokenStore.js'
+import {
+	makeFileTokenStore,
+	type TokenIdentifiers,
+} from './shared/fileTokenStore.js'
 import { logger, buildLogger, type PinoLogLevel } from './shared/log.js'
 import { logOnlyInDevelopment } from './shared/secureLogger.js'
-import { createTool, toolError, toolSuccess } from './shared/toolBuilder.js'
+import { toolError, toolSuccess } from './shared/toolBuilder.js'
 import { allToolSpecs, type ToolSpec } from './tools/index.js'
 
 // Props for MCP server state
@@ -41,7 +48,7 @@ class SchwabMCPServer {
 	private validatedConfig!: ValidatedEnv
 	private props: MCPProps = {}
 	private mcpLogger = logger.child(LOGGER_CONTEXTS.MCP_DO)
-	
+
 	server = new Server(
 		{
 			name: APP_NAME,
@@ -60,27 +67,28 @@ class SchwabMCPServer {
 			const env: Env = {
 				SCHWAB_CLIENT_ID: process.env.SCHWAB_CLIENT_ID!,
 				SCHWAB_CLIENT_SECRET: process.env.SCHWAB_CLIENT_SECRET!,
-				SCHWAB_REDIRECT_URI: process.env.SCHWAB_REDIRECT_URI || 'https://localhost:3000/callback',
+				SCHWAB_REDIRECT_URI:
+					process.env.SCHWAB_REDIRECT_URI || 'https://localhost:3000/callback',
 				LOG_LEVEL: process.env.LOG_LEVEL,
 				ENVIRONMENT: process.env.ENVIRONMENT,
 				PORT: process.env.PORT ? parseInt(process.env.PORT) : undefined,
 			}
 
 			// Register a minimal tool synchronously to ensure tools are detected
-			this.server.setRequestHandler('tools/list', async () => ({
+			this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
 				tools: [
 					{
 						name: TOOL_NAMES.STATUS,
 						description: 'Check Schwab MCP server status',
 						inputSchema: {
-							type: 'object',
+							type: 'object' as const,
 							properties: {},
 						},
 					},
 				],
 			}))
 
-			this.server.setRequestHandler('tools/call', async (request: any) => {
+			this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 				if (request.params.name === TOOL_NAMES.STATUS) {
 					return {
 						content: [
@@ -95,7 +103,7 @@ class SchwabMCPServer {
 			})
 
 			this.validatedConfig = getConfig(env)
-			
+
 			// Initialize logger with configured level
 			const logLevel = this.validatedConfig.LOG_LEVEL as PinoLogLevel
 			const newLogger = buildLogger(logLevel)
@@ -161,9 +169,12 @@ class SchwabMCPServer {
 
 			// 1. Create ETM instance (synchronous)
 			const hadExistingTokenManager = !!this.tokenManager
-			this.mcpLogger.debug('[SchwabMCPServer.init] STEP 3A: ETM instance setup', {
-				hadExisting: hadExistingTokenManager,
-			})
+			this.mcpLogger.debug(
+				'[SchwabMCPServer.init] STEP 3A: ETM instance setup',
+				{
+					hadExisting: hadExistingTokenManager,
+				},
+			)
 			if (!this.tokenManager) {
 				this.tokenManager = initializeSchwabAuthClient(
 					this.validatedConfig,
@@ -172,9 +183,12 @@ class SchwabMCPServer {
 					saveTokenForETM,
 				) // This is synchronous
 			}
-			this.mcpLogger.debug('[SchwabMCPServer.init] STEP 3B: ETM instance ready', {
-				wasReused: hadExistingTokenManager,
-			})
+			this.mcpLogger.debug(
+				'[SchwabMCPServer.init] STEP 3B: ETM instance ready',
+				{
+					wasReused: hadExistingTokenManager,
+				},
+			)
 
 			const mcpLogger: SchwabApiLogger = {
 				debug: (message: string, ...args: any[]) =>
@@ -201,18 +215,18 @@ class SchwabMCPServer {
 			const hasToken = await loadTokenForETM()
 			if (!hasToken) {
 				this.mcpLogger.info('No existing tokens found, starting OAuth flow...')
-				
+
 				// Start OAuth server and wait for authentication
 				const userData = await startOAuthServer(
 					this.validatedConfig,
 					this.tokenManager,
 					fileToken,
 				)
-				
+
 				// Update props with schwabUserId
 				this.props.schwabUserId = userData.schwabUserId
 				this.props.clientId = this.validatedConfig.SCHWAB_CLIENT_ID
-				
+
 				this.mcpLogger.info('OAuth flow completed successfully')
 			} else {
 				this.mcpLogger.info('Existing tokens found, skipping OAuth flow')
@@ -224,7 +238,9 @@ class SchwabMCPServer {
 					{ clientId: this.props.clientId },
 					{ schwabUserId: this.props.schwabUserId },
 				)
-				this.mcpLogger.debug('[SchwabMCPServer.init] STEP 5C: Token migration completed')
+				this.mcpLogger.debug(
+					'[SchwabMCPServer.init] STEP 5C: Token migration completed',
+				)
 			}
 
 			// 3. Create SchwabApiClient AFTER tokens are loaded
@@ -240,12 +256,18 @@ class SchwabMCPServer {
 				},
 				auth: this.tokenManager,
 			})
-			this.mcpLogger.debug('[SchwabMCPServer.init] STEP 6: SchwabApiClient ready.')
+			this.mcpLogger.debug(
+				'[SchwabMCPServer.init] STEP 6: SchwabApiClient ready.',
+			)
 
 			// 4. Register tools
-			this.mcpLogger.debug('[SchwabMCPServer.init] STEP 7A: Calling registerTools...')
+			this.mcpLogger.debug(
+				'[SchwabMCPServer.init] STEP 7A: Calling registerTools...',
+			)
 			this.registerTools()
-			this.mcpLogger.debug('[SchwabMCPServer.init] STEP 7B: registerTools completed.')
+			this.mcpLogger.debug(
+				'[SchwabMCPServer.init] STEP 7B: registerTools completed.',
+			)
 			this.mcpLogger.debug(
 				'[SchwabMCPServer.init] STEP 8: SchwabMCPServer.init FINISHED SUCCESSFULLY',
 			)
@@ -269,11 +291,11 @@ class SchwabMCPServer {
 			inputSchema: spec.schema,
 		}))
 
-		this.server.setRequestHandler('tools/list', async () => ({
+		this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
 			tools,
 		}))
 
-		this.server.setRequestHandler('tools/call', async (request: any) => {
+		this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			const toolName = request.params.name
 			const params = request.params.arguments || {}
 

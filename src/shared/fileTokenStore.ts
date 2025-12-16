@@ -2,8 +2,8 @@ import { promises as fs } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { type TokenData } from '@sudowealth/schwab-api'
-import { logger } from './log.js'
 import { LOGGER_CONTEXTS } from './constants.js'
+import { logger } from './log.js'
 
 const storeLogger = logger.child(LOGGER_CONTEXTS.TOKEN_STORE)
 
@@ -82,9 +82,7 @@ async function readTokens(): Promise<Record<string, TokenData>> {
 /**
  * Write all tokens to file
  */
-async function writeTokens(
-	tokens: Record<string, TokenData>,
-): Promise<void> {
+async function writeTokens(tokens: Record<string, TokenData>): Promise<void> {
 	try {
 		await ensureTokenDir()
 		await fs.writeFile(TOKEN_FILE, JSON.stringify(tokens, null, 2), 'utf-8')
@@ -179,7 +177,9 @@ export function makeFileTokenStore(): FileTokenStore {
 					newKey: newKey.substring(0, 20) + '...',
 				})
 			} else if (newToken) {
-				storeLogger.debug('Token already exists at new key, no migration needed')
+				storeLogger.debug(
+					'Token already exists at new key, no migration needed',
+				)
 			} else {
 				storeLogger.debug('No token at old key to migrate')
 			}

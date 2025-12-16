@@ -30,15 +30,4 @@ var __exportStar =
 				__createBinding(exports, m, p)
 	}
 Object.defineProperty(exports, '__esModule', { value: true })
-exports.SchwabHandler = void 0
-// Export all auth-related modules
-__exportStar(require('./client'), exports)
-__exportStar(require('./cookies'), exports)
-var handler_1 = require('./handler')
-Object.defineProperty(exports, 'SchwabHandler', {
-	enumerable: true,
-	get: function () {
-		return handler_1.SchwabHandler
-	},
-})
-__exportStar(require('./stateUtils'), exports)
+__exportStar(require('./approvalDialog'), exports)

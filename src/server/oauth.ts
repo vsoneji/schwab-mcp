@@ -1,18 +1,17 @@
-import express, { type Request, type Response } from 'express'
-import https from 'node:https'
 import { promises as fs } from 'node:fs'
+import https from 'node:https'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import open from 'open'
 import {
 	createApiClient,
 	type EnhancedTokenManager,
-	type TokenData,
 } from '@sudowealth/schwab-api'
-import { type ValidatedEnv } from '../../types/env.js.js'
-import { logger } from '../shared/log.js.js'
-import { LOGGER_CONTEXTS } from '../shared/constants.js.js'
-import { type FileTokenStore } from '../shared/fileTokenStore.js.js'
+import express, { type Request, type Response } from 'express'
+import open from 'open'
+import { type ValidatedEnv } from '../../types/env.js'
+import { LOGGER_CONTEXTS } from '../shared/constants.js'
+import { type FileTokenStore } from '../shared/fileTokenStore.js'
+import { logger } from '../shared/log.js'
 import { generateCertificates } from './certificates.js'
 
 const oauthLogger = logger.child(LOGGER_CONTEXTS.OAUTH_HANDLER)
@@ -95,7 +94,8 @@ export async function startOAuthServer(
 				oauthLogger.info('Fetching user preferences to get Schwab user ID')
 				let userPreferences
 				try {
-					userPreferences = await client.trader.userPreference.getUserPreference()
+					userPreferences =
+						await client.trader.userPreference.getUserPreference()
 				} catch (error: any) {
 					oauthLogger.error('Failed to fetch user preferences', {
 						error: error.message,
@@ -209,7 +209,7 @@ export async function startOAuthServer(
 
 			// Generate authorization URL
 			const authUrl = await tokenManager.getAuthorizationUrl()
-			
+
 			oauthLogger.info('Please visit this URL to authorize the application:')
 			console.log(`\n${authUrl}\n`)
 			console.log('Opening browser automatically...\n')

@@ -29,7 +29,7 @@ export const toolSpecs = [
 			const accounts = await c.trader.accounts.getAccounts({
 				queryParams: { fields: p?.fields },
 			})
-			const accountSummaries = accounts.map((acc) => ({
+			const accountSummaries = accounts.map((acc: any) => ({
 				...acc.securitiesAccount,
 			}))
 			const displayMap = await buildAccountDisplayMap(c)
@@ -44,7 +44,7 @@ export const toolSpecs = [
 			logger.info('[getAccountNumbers] Fetching account numbers')
 			const accounts = await c.trader.accounts.getAccountNumbers(p)
 			const displayMap = await buildAccountDisplayMap(c)
-			return accounts.map((acc) => {
+			return accounts.map((acc: any) => {
 				return {
 					accountDisplay: displayMap[acc.accountNumber],
 					hashValue: acc.hashValue,

@@ -1,10 +1,10 @@
+import { exec } from 'node:child_process'
 import { promises as fs } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
-import { logger } from '../shared/log.js.js'
-import { LOGGER_CONTEXTS } from '../shared/constants.js.js'
+import { LOGGER_CONTEXTS } from '../shared/constants.js'
+import { logger } from '../shared/log.js'
 
 const certLogger = logger.child(LOGGER_CONTEXTS.AUTH_CLIENT)
 const execAsync = promisify(exec)
@@ -20,12 +20,9 @@ async function certificatesExist(): Promise<boolean> {
 	try {
 		const certPath = join(CERT_DIR, 'cert.pem')
 		const keyPath = join(CERT_DIR, 'key.pem')
-		
-		await Promise.all([
-			fs.access(certPath),
-			fs.access(keyPath),
-		])
-		
+
+		await Promise.all([fs.access(certPath), fs.access(keyPath)])
+
 		return true
 	} catch {
 		return false
@@ -64,7 +61,9 @@ export async function generateCertificates(): Promise<void> {
 		certLogger.info('Self-signed certificates generated successfully')
 		certLogger.info(`Certificate: ${certPath}`)
 		certLogger.info(`Private key: ${keyPath}`)
-		certLogger.warn('Note: You may need to trust this certificate in your system or browser')
+		certLogger.warn(
+			'Note: You may need to trust this certificate in your system or browser',
+		)
 	} catch (error: any) {
 		certLogger.error('Failed to generate certificates', {
 			error: error.message,
